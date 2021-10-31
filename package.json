@@ -1,0 +1,28 @@
+{
+  "name": "fnft-royalty-distribution-standard",
+  "version": "1.0.0",
+  "description": "On-Chain Royalty Distribution Standard",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PowerStream3604/FNFT-Royalty-Distribution-Standard.git"
+  },
+  "keywords": [
+    "EIP3602"
+  ],
+  "author": "David Kim",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/PowerStream3604/FNFT-Royalty-Distribution-Standard/issues"
+  },
+  "homepage": "https://github.com/PowerStream3604/FNFT-Royalty-Distribution-Standard#readme",
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.3.2",
+    "chai": "^4.3.4",
+    "mocha": "^9.1.3",
+    "truffle": "^5.4.17"
+  }
+}
