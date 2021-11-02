@@ -5,16 +5,10 @@ import "./interface/IERC20.sol";
 import "./math/SafeMath.sol";
 
 /**
- * @title Standard RFT(ERC1633) token extending ERC20
+ * @title Standard FNFT Token(EIP3602) with On-Chain Royalty Distribution System.
  *
- * @dev Implementation of the basic standard token.
- * https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md
- * Originally based on code by FirstBlood:
- * https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- *
- * This implementation emits additional Approval events, allowing applications to reconstruct the allowance status for
- * all accounts just by listening to said events. Note that this isn't required by the specification, and other
- * compliant implementations may not do it.
+ * @author David Kim
+ * @dev Implementation of the FNFT with Royalty Distribution System. (EIP3602)
  */
 contract RFT is IERC20 {
     using SafeMath for uint256;
@@ -26,10 +20,10 @@ contract RFT is IERC20 {
     uint256 private _totalSupply;
 
     // NFT Contract Address
-    address private _parentToken;
+    address private _targetToken;
 
     // NFT ID of NFT(RFT) - TokenId
-    uint256 private _parentTokenId;
+    uint256 private _targetTokenId;
 
     // Admin Address to Set the Parent NFT
     address private _admin;
@@ -49,46 +43,38 @@ contract RFT is IERC20 {
         return this.onERC721Received.selector;
     }
 
-
     /**
      * @dev (ERC165) Determines if this contract supports Re-FT(ERC1633).
      * @param interfaceID The bytes4 to query if it matches with the contract interface id.
      */
     function supportsInterface(bytes4 interfaceID) external pure returns(bool) {
-    return
-      interfaceID == this.supportsInterface.selector || // ERC165
-      interfaceID == this.parentToken.selector || // parentToken()
-      interfaceID == this.parentTokenId.selector || // parentTokenId()
-      interfaceID == this.parentToken.selector ^ this.parentTokenId.selector; // RFT
-  }
+        return
+        interfaceID == this.supportsInterface.selector || //ERC165
+        interfaceID == this.targetNFT.selector || // targetNFT()
+        interfaceID == this.sendRoyalty.selector || // sendRoyalty()
+        interfaceID == this.withdrawRoyalty.selector || // withdrawRoyalty()
+        interfaceID == this.targetNFT.selector ^ this.sendRoyalty.selector ^ this.withdrawRoyalty.selector; // FNFT
+    }
 
     /**
      * @dev Sets the Address of NFT Contract Address & NFT Token ID
-     * @param parentNFTContractAddress The address NFT Contract address.
-     * @param parentNFTTokenId The token id of NFT.
+     * @param targetNFTContractAddress The address NFT Contract address.
+     * @param targetNFTTokenId The token id of NFT.
      */
-    function setParentNFT (address parentNFTContractAddress, uint256 parentNFTTokenId) public {
-        require(msg.sender == _admin, "Only Admin can set Parent NFT of Re-Fungible Token");
-        _parentToken = parentNFTContractAddress;
-        _parentTokenId = parentNFTTokenId;
+    function setTargetNFT (address targetNFTContractAddress, uint256 targetNFTTokenId) public {
+        require(msg.sender == _admin, "Only Admin can set the Target NFT Token");
+        _targetToken = targetNFTContractAddress;
+        _targetTokenId = targetNFTTokenId;
     }
 
     /**
-     * @dev Returns the Address of Parent Token Address
-     * @return An Address representing the address of NFT Contract this Re-FT is pointing to.
+     * @dev Returns the Address of NFT Contract & Token ID of NFT
+     * @return An Address representing the address of NFT Contract this FNFT is pointing to.
+     * @return An uint256 representing the token id of NFT
      */
-    function parentToken() external view returns(address) {
-        return _parentToken;
+    function targetNFT() external view returns(address, uint256) {
+        return (_targetToken, _targetTokenId);
     }
-
-    /**
-     * @dev Returns the Token ID of NFT
-     * @return An uint256 representing the token id of the NFT this Re-FT is pointing to.
-     */
-    function parentTokenId() external view returns(uint256) {
-        return _parentTokenId;
-    }
-
 
     /**
     * @dev Total number of tokens in existence
