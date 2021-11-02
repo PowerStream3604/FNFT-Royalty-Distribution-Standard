@@ -1,6 +1,4 @@
-const truffleAssert = require("truffle-assertions");
 const assert = require('chai').assert;
-
 const TargetNFT = artifacts.require("TargetNFT");
 const RFT = artifacts.require("RFT");
 
@@ -93,7 +91,7 @@ contract("TargetNFT", (accounts) => {
         const rftToken = await rft.parentToken();
         const rftTokenId = await rft.parentTokenId();
 
-        //await assert.equal(rft.address, rftToken);
+        await assert.equal(targetNFT.address, rftToken);
         await assert.equal(rft.address, await targetNFT.ownerOf(rftTokenId));
 
     });
