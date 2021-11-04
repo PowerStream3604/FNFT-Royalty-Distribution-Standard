@@ -28,10 +28,76 @@ contract RFT is IERC20 {
     // Admin Address to Set the Parent NFT
     address private _admin;
 
+    // EIP3602 Variables
+    mapping (address => uint256) public userIndex;
+    mapping (address => bool) public ownerHistory;
+
+    struct Info {
+        uint256 balances;
+        uint256 royaltyIndex;
+    }
+    Info[] userInfo;
+
+    struct RoyaltyInfo {
+        Info[] userInfo;
+        uint256 royalty;
+    }
+    RoyaltyInfo[] royaltyInfo;
+
+    uint256 royaltyCounter = 0;
+
+    /**
+    @dev 'RoyaltySent' MUST emit when royalty is given.
+    The '_sender' argument MUST be the address of the account sending(giving) royalty to token owners.
+    The '_value' argument MUST be the value(amount) of ether '_sender' is sending to the token owners.
+    **/
+    event RoyaltyReceived(address indexed _sender, uint256 _value);
+
+    /**
+    @dev 'RoyaltyWithdrawal' MUST emit when royalties are withdrawn.
+    The '_withdrawer' argument MUST be the address of the account withdrawing royalty of his portion.
+    The '_value' argument MUST be the value(amount) of ether '_withdrawer' is withdrawing.
+    **/
+    event RoyaltyWithdrawal(address indexed _withdrawer, uint256 _value);
+
     constructor(uint256 total_supply) {
         _totalSupply = total_supply;
-        _balances[msg.sender] = total_supply;
+        //_balances[msg.sender] = total_supply;
+        ownerHistory[msg.sender] = true;
+        userInfo.push(Info(0, royaltyCounter));
+        userInfo[userIndex[msg.sender]].balances = userInfo[userIndex[msg.sender]].balances.add(_totalSupply);
+
         _admin = msg.sender;
+    }
+
+    function sendRoyalty() public payable returns(bool) {
+        royaltyCounter += 1;
+        // 가스비 최적화 관련 작업 필요
+        uint256 newIndex = royaltyInfo.length;
+        royaltyInfo.push();
+        royaltyInfo[newIndex].userInfo = userInfo;
+        royaltyInfo[newIndex].royalty = msg.value;
+
+        // Emit EVENT
+        emit RoyaltyReceived(msg.sender, msg.value);
+        return true;
+    }
+
+    function withdrawRoyalty () public payable {
+        if(!ownerHistory[msg.sender] || userInfo[userIndex[msg.sender]].royaltyIndex == royaltyCounter) return;
+        uint royaltySum = 0; // temporary holder of royalty sum
+        uint i;
+        for (i = userInfo[userIndex[msg.sender]].royaltyIndex; i < royaltyCounter; i++) {
+            // royaltySum += (royaltyInfo[i].userInfo[userIndex[msg.sender]].balances * royaltyInfo[i].royalty) / _totalSupply;
+            royaltySum += (royaltyInfo[i].userInfo[userIndex[msg.sender]].balances.mul(royaltyInfo[i].royalty)).div(_totalSupply);
+            if(gasleft() <= 2100) break;
+        }
+        userInfo[userIndex[msg.sender]].royaltyIndex = i;
+
+        (bool sent, ) = (msg.sender).call{value: royaltySum}("");
+        require(sent, "Failed to withdraw Royalty");
+
+        emit RoyaltyWithdrawal(msg.sender, royaltySum);
     }
 
     /**
@@ -89,7 +155,8 @@ contract RFT is IERC20 {
     * @return An uint256 representing the amount owned by the passed address.
     */
     function balanceOf(address owner) public view override returns (uint256) {
-        return _balances[owner];
+        // return _balances[owner];
+        userInfo[userIndex[owner]].balances;
     }
 
     /**
@@ -189,8 +256,17 @@ contract RFT is IERC20 {
     function _transfer(address from, address to, uint256 value) internal {
         require(to != address(0));
 
-        _balances[from] = _balances[from].sub(value);
-        _balances[to] = _balances[to].add(value);
+        if(ownerHistory[to] != true) {
+            ownerHistory[to] = true;
+            userIndex[to] = userInfo.length;
+            userInfo.push(Info(0, royaltyCounter));
+        }
+
+        //_balances[from] = _balances[from].sub(value);
+        //_balances[to] = _balances[to].add(value);
+        userInfo[userIndex[from]].balances = userInfo[userIndex[from]].balances.sub(value);
+        userInfo[userIndex[to]].balances = userInfo[userIndex[to]].balances.add(value);
+
         emit Transfer(from, to, value);
     }
 
@@ -205,7 +281,9 @@ contract RFT is IERC20 {
         require(account != address(0));
 
         _totalSupply = _totalSupply.add(value);
-        _balances[account] = _balances[account].add(value);
+        // _balances[account] = _balances[account].add(value);
+        userInfo[userIndex[account]].balances = userInfo[userIndex[account]].balances.add(value);
+
         emit Transfer(address(0), account, value);
     }
 
@@ -219,7 +297,9 @@ contract RFT is IERC20 {
         require(account != address(0));
 
         _totalSupply = _totalSupply.sub(value);
-        _balances[account] = _balances[account].sub(value);
+        // _balances[account] = _balances[account].sub(value);
+        userInfo[userIndex[account]].balances = userInfo[userIndex[account]].balances.sub(value);
+
         emit Transfer(account, address(0), value);
     }
 
