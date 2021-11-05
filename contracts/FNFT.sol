@@ -10,7 +10,7 @@ import "./math/SafeMath.sol";
  * @author David Kim
  * @dev Implementation of the FNFT with Royalty Distribution System. (EIP3602)
  */
-contract RFT is IERC20 {
+contract FNFT is IERC20 {
     using SafeMath for uint256;
 
     mapping (address => uint256) private _balances;
@@ -44,7 +44,7 @@ contract RFT is IERC20 {
     }
     RoyaltyInfo[] royaltyInfo;
 
-    uint256 royaltyCounter = 0;
+    uint256 public royaltyCounter = 0;
 
     /**
     @dev 'RoyaltySent' MUST emit when royalty is given.
@@ -64,13 +64,42 @@ contract RFT is IERC20 {
         _totalSupply = total_supply;
         //_balances[msg.sender] = total_supply;
         ownerHistory[msg.sender] = true;
-        userInfo.push(Info(0, royaltyCounter));
-        userInfo[userIndex[msg.sender]].balances = userInfo[userIndex[msg.sender]].balances.add(_totalSupply);
+        userIndex[msg.sender] = uint256(userInfo.length);
+        userInfo.push(Info(_totalSupply, royaltyCounter));
+        // userInfo[userIndex[msg.sender]].balances = userInfo[userIndex[msg.sender]].balances.add(_totalSupply);
 
         _admin = msg.sender;
     }
 
+    //TEST FUNCTIONS
+    function getLength() public view returns(uint256) {
+        return userInfo.length;
+    }
+    function getIndex() public view returns(uint256) {
+        return userIndex[msg.sender];
+    }
+    function getTotalSupply() public view returns(uint256) {
+        return _totalSupply;
+    }
+    function getRoyaltyCounter() public view returns(uint256) {
+        return userInfo[userIndex[msg.sender]].royaltyIndex;
+    }
+    function getZeroBalance() public view returns(uint256) {
+        return userInfo[0].balances;
+    }
+    function showBalance() public view returns(uint256) {
+        return userInfo[userIndex[msg.sender]].balances;
+    }
+    function getContractRoyaltyCounter() public view returns(uint256) {
+        return royaltyCounter;
+    }
+
+//    function getUserInfo() public returns(Info) {
+//        return userInfo[userIndex[msg.sender]];
+//    }
+
     function sendRoyalty() public payable returns(bool) {
+        require(msg.value >= 1000000000000, "Prevent small bid attack.");
         royaltyCounter += 1;
         // 가스비 최적화 관련 작업 필요
         uint256 newIndex = royaltyInfo.length;
@@ -156,7 +185,7 @@ contract RFT is IERC20 {
     */
     function balanceOf(address owner) public view override returns (uint256) {
         // return _balances[owner];
-        userInfo[userIndex[owner]].balances;
+        return userInfo[userIndex[owner]].balances;
     }
 
     /**
