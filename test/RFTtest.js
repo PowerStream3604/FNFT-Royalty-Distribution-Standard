@@ -3,7 +3,7 @@ const TargetNFT = artifacts.require("TargetNFT");
 const RFT = artifacts.require("RFT");
 
 
-contract("TargetNFT", (accounts) => {
+contract("Re-Fungible Token Standard :: RFT", (accounts) => {
     // Init Users
     const user1 = accounts[0];
     const user2 = accounts[1];
@@ -19,14 +19,14 @@ contract("TargetNFT", (accounts) => {
         const owner1 = await targetNFT.ownerOf(1);
         const owner2 = await targetNFT.ownerOf(2);
 
-        console.log("       Owner of Token Id 1 : ", owner1);
-        console.log("       Owner of Token Id 2 : ", owner2);
+        // console.log("       Owner of Token Id 1 : ", owner1);
+        // console.log("       Owner of Token Id 2 : ", owner2);
 
         await assert.equal(user2, owner1);
         await assert.equal(user3, owner2);
     });
 
-    it("Basic Re-FT Token Test", async () => {
+    it("Basic Re-FT Contract Test", async () => {
         const rft = await RFT.new(1000, {from: user1});
 
         const balance = await rft.balanceOf(user1);
@@ -51,7 +51,7 @@ contract("TargetNFT", (accounts) => {
         const nftOwner = await targetNFT.ownerOf(tokenId);
         await assert.equal(user2, nftOwner);
 
-        console.log("       NFT Contract Address : ", targetNFT.address);
+        // console.log("       NFT Contract Address : ", targetNFT.address);
 
         // Deploy RFT
         const rft = await RFT.new(1000, {from: user1});
@@ -61,12 +61,12 @@ contract("TargetNFT", (accounts) => {
 
         // Fetch Parent Token Contract Address
         const parentToken = await rft.parentToken();
-        console.log("       Parent Token Address : ", parentToken);
+        // console.log("       Parent Token Address : ", parentToken);
         await assert.equal(targetNFT.address, parentToken);
 
         // Fetch Parent Token Id
         const parentTokenId = await rft.parentTokenId();
-        console.log("       Parent Token Id : ", parentTokenId.toString());
+        // console.log("       Parent Token Id : ", parentTokenId.toString());
         await assert.equal(parentTokenId, tokenId);
     });
 
