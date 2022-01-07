@@ -124,8 +124,7 @@ contract FNFT is IERC20 {
             
             royaltySum += ratio.div(_totalSupply);
             uint256 modu = mod(ratio, _totalSupply);
-            modu == ratio ? : royalty += modu;
-            royaltySum += mod(ratio, _totalSupply);
+            modu == ratio ? : royaltySum += modu;
 
             if(gasleft() <= 2100) break;
         }
