@@ -114,11 +114,19 @@ contract FNFT is IERC20 {
 
     function withdrawRoyalty () public payable {
         if(!ownerHistory[msg.sender] || userInfo[userIndex[msg.sender]].royaltyIndex == royaltyCounter) return;
-        uint royaltySum = 0; // temporary holder of royalty sum
+        uint256 royaltySum = 0; // temporary holder of royalty sum
+        uint256 ratio;
         uint i;
         for (i = userInfo[userIndex[msg.sender]].royaltyIndex; i < royaltyCounter; i++) {
+
             // royaltySum += (royaltyInfo[i].userInfo[userIndex[msg.sender]].balances * royaltyInfo[i].royalty) / _totalSupply;
-            royaltySum += (royaltyInfo[i].userInfo[userIndex[msg.sender]].balances.mul(royaltyInfo[i].royalty)).div(_totalSupply);
+            ratio = (royaltyInfo[i].userInfo[userIndex[msg.sender]].balances.mul(royaltyInfo[i].royalty));
+            
+            royaltySum += ratio.div(_totalSupply);
+            uint256 modu = mod(ratio, _totalSupply);
+            modu == ratio ? : royalty += modu;
+            royaltySum += mod(ratio, _totalSupply);
+
             if(gasleft() <= 2100) break;
         }
         userInfo[userIndex[msg.sender]].royaltyIndex = i;
